@@ -1,0 +1,55 @@
+service: meme-historian
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  memorySize: 128
+  region: ${opt:region, 'eu-north-1'}
+  stage: ${opt:stage, 'dev'}
+  deploymentBucket:
+    name: sls-deploy-${opt:account, 'serverless'}-${self:provider.region}
+    serverSideEncryption: AES256
+  environment:
+    IMAGE_METADATA_TABLE: ${file(config/${self:provider.stage}.json):tableName}-${self:provider.stage}
+    S3_BUCKET_NAME: ${file(config/${self:provider.stage}.json):bucketName}-${self:provider.stage}
+
+  iamRoleStatements:
+    - Effect: "Allow"
+      Action:
+        - dynamodb:GetItem
+        - dynamodb:BatchGetItem
+        - dynamodb:UpdateItem
+        - dynamodb:PutItem
+        - dynamodb:DeleteItem
+      Resource:
+        - arn:aws:dynamodb:${self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.IMAGE_METADATA_TABLE}
+    - Effect: "Allow"
+      Action:
+        - s3:GetObject
+        - s3:ListBucket
+        - s3:ListObjectsV2
+        - s3:PutObject
+      Resource:
+        - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}/*
+
+    - Effect: "Allow"
+      Action:
+        - ses:SendEmail
+      Resource: "*"
+
+functions:
+  uploadImage:
+    handler: src/handler.uploadImage
+    events:
+      - http:
+          path: album/folder/{folderName}
+          method: post
+
+resources:
+  - ${file(template.yml)}
+
+plugins:
+  - serverless-plugin-typescript
+  - serverless-deployment-bucket
+  - serverless-pseudo-parameters
+  - serverless-plugin-include-dependencies

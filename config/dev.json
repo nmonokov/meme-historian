@@ -1,0 +1,4 @@
+{
+  "tableName": "image-metadata",
+  "bucketName": "image-storage"
+}

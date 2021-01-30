@@ -1,0 +1,15 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "plugins": [
+    "@typescript-eslint"
+  ],
+  "extends": [
+    "plugin:@typescript-eslint/recommended", "google"
+  ],
+  "rules": {
+    "max-len": [2, 125],
+    "import/prefer-default-export": 0,
+    "object-curly-spacing": "off",
+    "no-unused-vars": "warn"
+  }
+}
