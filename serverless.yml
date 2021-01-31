@@ -30,6 +30,7 @@ provider:
         - s3:ListObjectsV2
         - s3:PutObject
       Resource:
+        - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}*
         - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}/*
 
     - Effect: "Allow"
@@ -44,6 +45,12 @@ functions:
       - http:
           path: album/folder/{folderName}
           method: post
+  getFolderContent:
+    handler: src/handler.getFolderContent
+    events:
+      - http:
+          path: album/folder/{folderName}
+          method: get
 
 resources:
   - ${file(template.yml)}
