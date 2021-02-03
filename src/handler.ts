@@ -2,17 +2,17 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { clientError, ok, serverError } from './responseUtils';
 import { ManagedUpload } from 'aws-sdk/clients/s3';
 import SendData = ManagedUpload.SendData;
-import { listByFolder, upload } from './s3/s3Bucket';
+import { listByFolder, upload, foldersList } from './s3/s3Bucket';
 import * as log from 'loglevel';
 import { LogLevelDesc } from 'loglevel';
 
 const { LOG_LEVEL } = process.env;
 log.setDefaultLevel(LOG_LEVEL as LogLevelDesc);
 
-// TODO implement handler for max suggested memes possible.
 // TODO implement image deletion
 // TODO implement image move to another folder
 // TODO make suggest folder logic. SES topic with Lambda triggered when image in suggest folder is uploaded.
+// TODO implement handler for max suggested memes possible.
 // TODO Cognito user authentication: Admin role and user role. Notify when requesting registration.
 
 /**
@@ -54,6 +54,20 @@ export const getFolderContent = async (event: APIGatewayProxyEvent): Promise<API
     const images = await listByFolder(event.pathParameters.folderName);
     log.debug({ data: images });
     return ok(images);
+  } catch (error) {
+    log.error({ message: error.message });
+    return serverError(error.message);
+  }
+};
+
+/**
+ * Return all folders present in the S3 bucket with the default one.
+ */
+export const folders = async (): Promise<APIGatewayProxyResult> => {
+  try {
+    const folders = await foldersList();
+    log.debug({ data: folders });
+    return ok(folders);
   } catch (error) {
     log.error({ message: error.message });
     return serverError(error.message);

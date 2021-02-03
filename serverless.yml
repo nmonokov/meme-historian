@@ -10,10 +10,11 @@ provider:
     name: sls-deploy-${opt:account, 'serverless'}-${self:provider.region}
     serverSideEncryption: AES256
   environment:
-    IMAGE_METADATA_TABLE: ${file(config/${self:provider.stage}.json):tableName}-${self:provider.stage}
+    DEFAULT_FOLDER: ${file(config/${self:provider.stage}.json):defaultFolder}
     S3_BUCKET_NAME: ${file(config/${self:provider.stage}.json):bucketName}-${self:provider.stage}
     LOG_LEVEL: ${file(config/${self:provider.stage}.json):logLevel}
-
+  apiKeys:
+    - meme-api-key
   iamRoleStatements:
     - Effect: "Allow"
       Action:
@@ -36,12 +37,21 @@ functions:
       - http:
           path: album/folder/{folderName}
           method: post
+          private: true
+  folders:
+    handler: src/handler.folders
+    events:
+      - http:
+          path: album/folder
+          method: get
+          private: true
   getFolderContent:
     handler: src/handler.getFolderContent
     events:
       - http:
           path: album/folder/{folderName}
           method: get
+          private: true
 
 resources:
   - ${file(template.yml)}

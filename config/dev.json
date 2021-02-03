@@ -1,4 +1,5 @@
 {
   "bucketName": "image-storage",
-  "logLevel": "DEBUG"
+  "logLevel": "DEBUG",
+  "defaultFolder": "default"
 }
