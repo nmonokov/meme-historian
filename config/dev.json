@@ -1,4 +1,4 @@
 {
-  "tableName": "image-metadata",
-  "bucketName": "image-storage"
+  "bucketName": "image-storage",
+  "logLevel": "DEBUG"
 }

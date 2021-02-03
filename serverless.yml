@@ -12,6 +12,7 @@ provider:
   environment:
     IMAGE_METADATA_TABLE: ${file(config/${self:provider.stage}.json):tableName}-${self:provider.stage}
     S3_BUCKET_NAME: ${file(config/${self:provider.stage}.json):bucketName}-${self:provider.stage}
+    LOG_LEVEL: ${file(config/${self:provider.stage}.json):logLevel}
 
   iamRoleStatements:
     - Effect: "Allow"

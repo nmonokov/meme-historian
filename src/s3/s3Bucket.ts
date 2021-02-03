@@ -10,10 +10,15 @@ import { S3 } from 'aws-sdk';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
 import SendData = ManagedUpload.SendData;
 import { ImageData } from '../model';
+import * as log from 'loglevel';
 
 const { S3_BUCKET_NAME } = process.env;
 const bucketName: BucketName = S3_BUCKET_NAME;
 const s3 = new S3();
+
+// TODO make human readable folder name
+// TODO list of folders. Use listObjectsV2 with Delimeter: '/' with pagination and with default folder
+// TODO add pagination to images
 
 /**
  * Decrypts byte image into stream and stores to s3 bucket with selected prefix as folder
@@ -31,14 +36,17 @@ export const upload = async (byteImage: string, folderName: string): Promise<Sen
     Key: filePath,
     ContentType: 'image/jpeg',
   };
+  log.info({
+    message: 'Params to save image to S3 bucket.',
+    params,
+  });
   return s3.upload(params).promise();
 };
 
 const toImageData = (data: S3.Object): ImageData => {
   return ({
-    id: data.Key.split('/')[1],
-    url: s3.getSignedUrl('getObject', { Bucket: bucketName, Key: data.Key }),
-    uploadDate: data.LastModified.toISOString(),
+    id: data.Key,
+    uploadDate: data.LastModified?.toISOString(),
   });
 };
 
@@ -53,6 +61,10 @@ export const listByFolder = async (folderName: string): Promise<ImageData[]> => 
     Bucket: bucketName,
     Prefix: folderName,
   };
+  log.info({
+    message: 'Params to get list from S3 bucket.',
+    params,
+  });
   const rawImageList = await s3.listObjectsV2(params).promise();
   return rawImageList.Contents
       .map((data: S3.Object) => toImageData(data))
