@@ -17,15 +17,6 @@ provider:
   iamRoleStatements:
     - Effect: "Allow"
       Action:
-        - dynamodb:GetItem
-        - dynamodb:BatchGetItem
-        - dynamodb:UpdateItem
-        - dynamodb:PutItem
-        - dynamodb:DeleteItem
-      Resource:
-        - arn:aws:dynamodb:${self:provider.region}:#{AWS::AccountId}:table/${self:provider.environment.IMAGE_METADATA_TABLE}
-    - Effect: "Allow"
-      Action:
         - s3:GetObject
         - s3:ListBucket
         - s3:ListObjectsV2
@@ -33,7 +24,6 @@ provider:
       Resource:
         - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}*
         - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}/*
-
     - Effect: "Allow"
       Action:
         - ses:SendEmail

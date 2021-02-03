@@ -8,15 +8,3 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
-
-  ImageMetadataTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: ${self:provider.environment.IMAGE_METADATA_TABLE}
-      BillingMode: PAY_PER_REQUEST
-      AttributeDefinitions:
-        - AttributeName: imageId
-          AttributeType: S
-      KeySchema:
-        - AttributeName: imageId
-          KeyType: HASH
