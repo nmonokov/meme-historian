@@ -22,6 +22,7 @@ provider:
         - s3:ListBucket
         - s3:ListObjectsV2
         - s3:PutObject
+        - s3:DeleteObject
       Resource:
         - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}*
         - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}/*
@@ -37,6 +38,13 @@ functions:
       - http:
           path: album/folder/{folderName}
           method: post
+          private: true
+  deleteImage:
+    handler: src/handler.deleteImage
+    events:
+      - http:
+          path: album/folder/{folderName}/image/{imageId}
+          method: delete
           private: true
   folders:
     handler: src/handler.folders

@@ -44,10 +44,25 @@ export const upload = async (byteImage: string, folderName: string): Promise<Sen
   return s3.upload(params).promise();
 };
 
+/**
+ * Permanently deletes image from the S3 bucket.
+ * @param folderName of image for deletion.
+ * @param imageId image key for deletion.
+ */
+export const del = async (folderName: string, imageId: string): Promise<void> => {
+  const params: S3.Types.DeleteObjectRequest = {
+    Bucket: bucketName,
+    Key: `${folderName}/${imageId}`,
+  };
+  await s3.deleteObject(params).promise();
+};
+
 const toImageData = (data: S3.Object): ImageData => {
+  const imageKey: string[] = data?.Key?.split('/');
   return ({
-    id: data.Key,
-    uploadDate: data.LastModified?.toISOString(),
+    id: imageKey[1],
+    folderName: imageKey[0],
+    uploadDate: data?.LastModified?.toISOString(),
   });
 };
 
@@ -57,7 +72,7 @@ const toImageData = (data: S3.Object): ImageData => {
  *
  * @param folderName of images to return
  */
-export const listByFolder = async (folderName: string): Promise<ImageData[]> => {
+export const listByFolder = async (folderName: string): Promise<ImageData[] | undefined> => {
   const params: ListObjectsV2Request = {
     Bucket: bucketName,
     Prefix: folderName,
@@ -89,8 +104,8 @@ export const foldersList = async (): Promise<string[]> => {
   });
 
   const rawFolders = await s3.listObjectsV2(params).promise();
-  const folders: string[] = rawFolders?.CommonPrefixes
-      .map((data: CommonPrefix) => data.Prefix.replace('/', ''));
+  const folders: string[] = rawFolders.CommonPrefixes
+      ?.map((data: CommonPrefix) => data?.Prefix?.replace('/', ''));
   // TODO Move default folder logic to front end. Here we'll filter out default folder.
   if (!folders.includes(DEFAULT_FOLDER)) {
     log.info(`Using '${DEFAULT_FOLDER}' folder.`);

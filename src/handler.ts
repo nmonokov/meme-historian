@@ -1,15 +1,14 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
-import { clientError, ok, serverError } from './responseUtils';
+import { clientError, noContent, ok, serverError } from './responseUtils';
 import { ManagedUpload } from 'aws-sdk/clients/s3';
 import SendData = ManagedUpload.SendData;
-import { listByFolder, upload, foldersList } from './s3/s3Bucket';
+import { listByFolder, upload, foldersList, del } from './s3/s3Bucket';
 import * as log from 'loglevel';
 import { LogLevelDesc } from 'loglevel';
 
 const { LOG_LEVEL } = process.env;
 log.setDefaultLevel(LOG_LEVEL as LogLevelDesc);
 
-// TODO implement image deletion
 // TODO implement image move to another folder
 // TODO make suggest folder logic. SES topic with Lambda triggered when image in suggest folder is uploaded.
 // TODO implement handler for max suggested memes possible.
@@ -34,6 +33,31 @@ export const uploadImage = async (event: APIGatewayProxyEvent): Promise<APIGatew
     const imageData: SendData = await upload(JSON.parse(event.body).image, event.pathParameters.folderName);
     log.debug({ data: imageData });
     return ok(imageData.Key);
+  } catch (error) {
+    log.error({ message: error.message });
+    return serverError(error.message);
+  }
+};
+
+/**
+ * Permanently deletes image from S3 bucket. folderName and imageId(a.k.a. imageKey) are needed for deletion.
+ * FolderName is just for REST consistency.
+ * @param event contains folder name and image id.
+ */
+export const deleteImage = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  if (!event.pathParameters || !event.pathParameters.folderName) {
+    const message = 'folder path parameter is missing.';
+    log.error({ message });
+    return clientError(message);
+  }
+  if (!event.pathParameters || !event.pathParameters.imageId) {
+    const message = 'image parameter is missing.';
+    log.error({ message });
+    return clientError(message);
+  }
+  try {
+    await del(event.pathParameters.folderName, event.pathParameters.imageId);
+    return noContent();
   } catch (error) {
     log.error({ message: error.message });
     return serverError(error.message);

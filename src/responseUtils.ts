@@ -9,6 +9,13 @@ export const ok = async (data?: unknown): Promise<APIGatewayProxyResult> => {
   };
 };
 
+export const noContent = async (): Promise<APIGatewayProxyResult> => {
+  return {
+    statusCode: 204,
+    body: undefined,
+  };
+};
+
 export const clientError = async (body: string): Promise<APIGatewayProxyResult> => {
   return {
     statusCode: 400,
