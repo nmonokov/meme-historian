@@ -10,16 +10,15 @@ import { v4 as uuid } from 'uuid';
 import { S3 } from 'aws-sdk';
 import { ManagedUpload } from 'aws-sdk/lib/s3/managed_upload';
 import SendData = ManagedUpload.SendData;
-import { ImageData } from '../model';
+import { ImageData } from './model';
 import * as log from 'loglevel';
 
 const { S3_BUCKET_NAME, DEFAULT_FOLDER } = process.env;
 const bucketName: BucketName = S3_BUCKET_NAME;
 const s3 = new S3();
 
-// TODO make human readable folder name
-// TODO list of folders. Use listObjectsV2 with Delimeter: '/' with pagination and with default folder
-// TODO add pagination to images
+// TODO pagination for folders
+// TODO pagination for images
 
 /**
  * Decrypts byte image into stream and stores to s3 bucket with selected prefix as folder
@@ -55,6 +54,21 @@ export const del = async (folderName: string, imageId: string): Promise<void> =>
     Key: `${folderName}/${imageId}`,
   };
   await s3.deleteObject(params).promise();
+};
+
+/**
+ * Copies images inside one bucket folder into another.
+ * @param sourceFolder source folder
+ * @param sourceImage source image
+ * @param targetFolder target folder
+ */
+export const copy = async (sourceFolder: string, sourceImage, targetFolder: string): Promise<void> => {
+  const params: S3.Types.CopyObjectRequest = {
+    Bucket: bucketName,
+    CopySource: `${bucketName}/${sourceFolder}/${sourceImage}`,
+    Key: `${targetFolder}/${sourceImage}`,
+  };
+  await s3.copyObject(params).promise();
 };
 
 const toImageData = (data: S3.Object): ImageData => {

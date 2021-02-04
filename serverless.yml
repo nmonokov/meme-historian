@@ -4,7 +4,7 @@ provider:
   name: aws
   runtime: nodejs12.x
   memorySize: 128
-  region: ${opt:region, 'eu-north-1'}
+  region: ${opt:region, 'eu-central-1'}
   stage: ${opt:stage, 'dev'}
   deploymentBucket:
     name: sls-deploy-${opt:account, 'serverless'}-${self:provider.region}
@@ -45,6 +45,13 @@ functions:
       - http:
           path: album/folder/{folderName}/image/{imageId}
           method: delete
+          private: true
+  moveImage:
+    handler: src/handler.moveImage
+    events:
+      - http:
+          path: album/folder/{folderName}/image/{imageId}
+          method: put
           private: true
   folders:
     handler: src/handler.folders

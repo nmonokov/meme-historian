@@ -2,14 +2,13 @@ import { APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
 import { clientError, noContent, ok, serverError } from './responseUtils';
 import { ManagedUpload } from 'aws-sdk/clients/s3';
 import SendData = ManagedUpload.SendData;
-import { listByFolder, upload, foldersList, del } from './s3/s3Bucket';
+import { listByFolder, upload, foldersList, del, copy } from './bucket';
 import * as log from 'loglevel';
 import { LogLevelDesc } from 'loglevel';
 
 const { LOG_LEVEL } = process.env;
 log.setDefaultLevel(LOG_LEVEL as LogLevelDesc);
 
-// TODO implement image move to another folder
 // TODO make suggest folder logic. SES topic with Lambda triggered when image in suggest folder is uploaded.
 // TODO implement handler for max suggested memes possible.
 // TODO Cognito user authentication: Admin role and user role. Notify when requesting registration.
@@ -56,6 +55,42 @@ export const deleteImage = async (event: APIGatewayProxyEvent): Promise<APIGatew
     return clientError(message);
   }
   try {
+    await del(event.pathParameters.folderName, event.pathParameters.imageId);
+    return noContent();
+  } catch (error) {
+    log.error({ message: error.message });
+    return serverError(error.message);
+  }
+};
+
+/**
+ * Move image from one folder to another.
+ * @param event contains folder name and image id.
+ */
+export const moveImage = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  if (!event.pathParameters || !event.pathParameters.folderName) {
+    const message = 'folder path parameter is missing.';
+    log.error({ message });
+    return clientError(message);
+  }
+  if (!event.pathParameters || !event.pathParameters.imageId) {
+    const message = 'image parameter is missing.';
+    log.error({ message });
+    return clientError(message);
+  }
+  if (!event.body) {
+    const message = 'Body can\'t be empty';
+    log.error({ message });
+    return clientError(message);
+  }
+  const destinationFolder = JSON.parse(event.body).destinationFolder;
+  if (!destinationFolder) {
+    const message = 'You should specify "destinationFolder" property.';
+    log.error({ message });
+    return clientError(message);
+  }
+  try {
+    await copy(event.pathParameters.folderName, event.pathParameters.imageId, destinationFolder);
     await del(event.pathParameters.folderName, event.pathParameters.imageId);
     return noContent();
   } catch (error) {
