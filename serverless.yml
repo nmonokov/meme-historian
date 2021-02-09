@@ -4,6 +4,7 @@ provider:
   name: aws
   runtime: nodejs12.x
   memorySize: 128
+  account: ${opt:account}
   region: ${opt:region, 'eu-central-1'}
   stage: ${opt:stage, 'dev'}
   deploymentBucket:
@@ -13,6 +14,7 @@ provider:
     DEFAULT_FOLDER: ${file(config/${self:provider.stage}.json):defaultFolder}
     S3_BUCKET_NAME: ${file(config/${self:provider.stage}.json):bucketName}-${self:provider.stage}
     LOG_LEVEL: ${file(config/${self:provider.stage}.json):logLevel}
+    PAGE_SIZE: 20
   apiKeys:
     - meme-api-key
   iamRoleStatements:
@@ -60,6 +62,10 @@ functions:
           path: album/folder
           method: get
           private: true
+          request:
+            parameters:
+              querystrings:
+                token: false
   getFolderContent:
     handler: src/handler.getFolderContent
     events:
@@ -67,6 +73,10 @@ functions:
           path: album/folder/{folderName}
           method: get
           private: true
+          request:
+            parameters:
+              querystrings:
+                token: false
 
 resources:
   - ${file(template.yml)}

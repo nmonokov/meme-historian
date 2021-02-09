@@ -31,6 +31,7 @@ export const uploadImage = async (event: APIGatewayProxyEvent): Promise<APIGatew
   try {
     const imageData: SendData = await upload(JSON.parse(event.body).image, event.pathParameters.folderName);
     log.debug({ data: imageData });
+    // TODO SES service if suggest folder
     return ok(imageData.Key);
   } catch (error) {
     log.error({ message: error.message });
@@ -104,13 +105,14 @@ export const moveImage = async (event: APIGatewayProxyEvent): Promise<APIGateway
  * @param event contains folder name to take images from
  */
 export const getFolderContent = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  const continuationToken = event?.queryStringParameters?.token;
   if (!event.pathParameters || !event.pathParameters.folderName) {
     const message = 'folder path parameter is missing.';
     log.error({ message });
     return clientError(message);
   }
   try {
-    const images = await listByFolder(event.pathParameters.folderName);
+    const images = await listByFolder(event.pathParameters.folderName, continuationToken);
     log.debug({ data: images });
     return ok(images);
   } catch (error) {
@@ -122,9 +124,10 @@ export const getFolderContent = async (event: APIGatewayProxyEvent): Promise<API
 /**
  * Return all folders present in the S3 bucket with the default one.
  */
-export const folders = async (): Promise<APIGatewayProxyResult> => {
+export const folders = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
+  const continuationToken = event?.queryStringParameters?.token;
   try {
-    const folders = await foldersList();
+    const folders = await foldersList(continuationToken);
     log.debug({ data: folders });
     return ok(folders);
   } catch (error) {
