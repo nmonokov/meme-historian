@@ -18,18 +18,19 @@ log.setDefaultLevel(LOG_LEVEL as LogLevelDesc);
  * @param event contains encoded image and folder name where image will ve stored on s3.
  */
 export const uploadImage = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  if (!event.pathParameters || !event.pathParameters.folderName) {
-    const message = 'folder path parameter is missing.';
-    log.error({ message });
-    return clientError(message);
-  }
   if (!event.body) {
     const message = 'Body can\'t be empty';
     log.error({ message });
     return clientError(message);
   }
+  const byteImage = JSON.parse(event.body).image;
+  if (!byteImage) {
+    const message = 'You should specify "image" property.';
+    log.error({ message });
+    return clientError(message);
+  }
   try {
-    const imageData: SendData = await upload(JSON.parse(event.body).image, event.pathParameters.folderName);
+    const imageData: SendData = await upload(byteImage, event.pathParameters.folderName);
     log.debug({ data: imageData });
     // TODO SES service if suggest folder
     return ok(imageData.Key);
@@ -45,16 +46,6 @@ export const uploadImage = async (event: APIGatewayProxyEvent): Promise<APIGatew
  * @param event contains folder name and image id.
  */
 export const deleteImage = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  if (!event.pathParameters || !event.pathParameters.folderName) {
-    const message = 'folder path parameter is missing.';
-    log.error({ message });
-    return clientError(message);
-  }
-  if (!event.pathParameters || !event.pathParameters.imageId) {
-    const message = 'image parameter is missing.';
-    log.error({ message });
-    return clientError(message);
-  }
   try {
     await del(event.pathParameters.folderName, event.pathParameters.imageId);
     return noContent();
@@ -69,16 +60,6 @@ export const deleteImage = async (event: APIGatewayProxyEvent): Promise<APIGatew
  * @param event contains folder name and image id.
  */
 export const moveImage = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
-  if (!event.pathParameters || !event.pathParameters.folderName) {
-    const message = 'folder path parameter is missing.';
-    log.error({ message });
-    return clientError(message);
-  }
-  if (!event.pathParameters || !event.pathParameters.imageId) {
-    const message = 'image parameter is missing.';
-    log.error({ message });
-    return clientError(message);
-  }
   if (!event.body) {
     const message = 'Body can\'t be empty';
     log.error({ message });
@@ -106,11 +87,6 @@ export const moveImage = async (event: APIGatewayProxyEvent): Promise<APIGateway
  */
 export const getFolderContent = async (event: APIGatewayProxyEvent): Promise<APIGatewayProxyResult> => {
   const continuationToken = event?.queryStringParameters?.token;
-  if (!event.pathParameters || !event.pathParameters.folderName) {
-    const message = 'folder path parameter is missing.';
-    log.error({ message });
-    return clientError(message);
-  }
   try {
     const images = await listByFolder(event.pathParameters.folderName, continuationToken);
     log.debug({ data: images });
