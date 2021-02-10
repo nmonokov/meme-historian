@@ -1,5 +1,8 @@
 {
   "bucketName": "image-storage",
   "logLevel": "DEBUG",
-  "defaultFolder": "default"
+  "defaultFolder": "default",
+  "suggestFolder": "suggest",
+  "topicName": "suggest-email-topic",
+  "adminEmail": ""
 }

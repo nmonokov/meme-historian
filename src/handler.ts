@@ -5,12 +5,11 @@ import SendData = ManagedUpload.SendData;
 import { listByFolder, upload, foldersList, del, copy } from './bucket';
 import * as log from 'loglevel';
 import { LogLevelDesc } from 'loglevel';
+import { notifyAdmin } from './sns';
 
-const { LOG_LEVEL } = process.env;
+const { LOG_LEVEL, SUGGEST_FOLDER } = process.env;
 log.setDefaultLevel(LOG_LEVEL as LogLevelDesc);
 
-// TODO make suggest folder logic. SES topic with Lambda triggered when image in suggest folder is uploaded.
-// TODO implement handler for max suggested memes possible.
 // TODO Cognito user authentication: Admin role and user role. Notify when requesting registration.
 
 /**
@@ -23,16 +22,22 @@ export const uploadImage = async (event: APIGatewayProxyEvent): Promise<APIGatew
     log.error({ message });
     return clientError(message);
   }
+
   const byteImage = JSON.parse(event.body).image;
   if (!byteImage) {
     const message = 'You should specify "image" property.';
     log.error({ message });
     return clientError(message);
   }
+
   try {
-    const imageData: SendData = await upload(byteImage, event.pathParameters.folderName);
-    log.debug({ data: imageData });
-    // TODO SES service if suggest folder
+    const folderName = event.pathParameters.folderName;
+    const imageData: SendData = await upload(byteImage, folderName);
+
+    if (SUGGEST_FOLDER === folderName) {
+      await notifyAdmin(imageData.Key);
+    }
+
     return ok(imageData.Key);
   } catch (error) {
     log.error({ message: error.message });
@@ -65,12 +70,14 @@ export const moveImage = async (event: APIGatewayProxyEvent): Promise<APIGateway
     log.error({ message });
     return clientError(message);
   }
+
   const destinationFolder = JSON.parse(event.body).destinationFolder;
   if (!destinationFolder) {
     const message = 'You should specify "destinationFolder" property.';
     log.error({ message });
     return clientError(message);
   }
+
   try {
     await copy(event.pathParameters.folderName, event.pathParameters.imageId, destinationFolder);
     await del(event.pathParameters.folderName, event.pathParameters.imageId);

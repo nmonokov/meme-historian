@@ -12,9 +12,13 @@ provider:
     serverSideEncryption: AES256
   environment:
     DEFAULT_FOLDER: ${file(config/${self:provider.stage}.json):defaultFolder}
+    SUGGEST_FOLDER: ${file(config/${self:provider.stage}.json):suggestFolder}
     S3_BUCKET_NAME: ${file(config/${self:provider.stage}.json):bucketName}-${self:provider.stage}
     LOG_LEVEL: ${file(config/${self:provider.stage}.json):logLevel}
     PAGE_SIZE: 20
+    SNS_EMAIL_TOPIC_NAME: ${file(config/${self:provider.stage}.json):topicName}
+    SNS_EMAIL_TOPIC_ARN: arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:${self:provider.environment.SNS_EMAIL_TOPIC_NAME}
+    MAIL_RECEIVER: ${file(config/${self:provider.stage}.json):adminEmail}
   apiKeys:
     - meme-api-key
   iamRoleStatements:
@@ -30,8 +34,9 @@ provider:
         - arn:aws:s3:::${self:provider.environment.S3_BUCKET_NAME}/*
     - Effect: "Allow"
       Action:
-        - ses:SendEmail
-      Resource: "*"
+        - SNS:Publish
+      Resource:
+        - ${self:provider.environment.SNS_EMAIL_TOPIC_ARN}
 
 functions:
   uploadImage:

@@ -8,3 +8,10 @@ Resources:
         BlockPublicPolicy: true
         IgnorePublicAcls: true
         RestrictPublicBuckets: true
+  SnsMail:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: ${self:provider.environment.SNS_EMAIL_TOPIC_NAME}
+      Subscription:
+        - Endpoint: ${self:provider.environment.MAIL_RECEIVER}
+          Protocol: Email
